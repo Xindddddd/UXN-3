@@ -1,0 +1,42 @@
+; net_echo.uxn
+
+@addr
+&ipv4_addr $4
+&port      $2
+
+@buf
+&data      $400
+
+; 1) socket()
+2 1 0
+NET.call
+
+; 2) bind()  (assumes &addr is set to point at an IPv4+port record)
+1
+NET.call
+
+; 3) listen(backlog=1) — backlog passed via &flags
+1           ; set &flags = 1
+2
+NET.call
+
+:loop
+  ; 4) accept()
+ 3
+ NET.call
+
+  ; 5) recv(length=32)
+ 32         ; set &len = 32
+ 6
+ NET.call
+
+  ; 6) send(length=32)
+ 32         ; set &len = 32
+ 5
+ NET.call
+
+  ; 7) close()
+ 7
+ NET.call
+
+  jump loop
