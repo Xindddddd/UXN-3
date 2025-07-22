@@ -1,0 +1,94 @@
+( Simple HTTP Client )
+( 最简单的HTTP客户端测试 )
+
+|00 @System &vector $2 &wst $1 &rst $1 &eaddr $2 &ecode $2
+|10 @Console &vector $2 &read $1 &pad $5 &write $1 &error $1
+|a0 @Network &vector $2 &state $1 &type $1 &host $2 &port $2 &length $2 &read $2 &write $2
+
+|0100 ( -> )
+    ;msg1 print-str
+    
+    ( 设置网络回调 )
+    ;on-network .Network/vector DEO2
+    
+    ( 设置客户端模式 )
+    #00 .Network/type DEO
+    
+    ( 设置主机和端口 )
+    ;host .Network/host DEO2
+    #0050 .Network/port DEO2
+    
+    ( 连接 )
+    #01 .Network/state DEO
+    
+BRK
+
+@on-network ( -> )
+    .Network/state DEI
+    
+    DUP #01 EQU ?&connecting
+    DUP #02 EQU ?&connected  
+    DUP #00 EQU ?&closed
+    DUP #04 EQU ?&error
+    
+    POP BRK
+    
+    &connecting
+        ;msg2 print-str
+        POP BRK
+        
+    &connected
+        ;msg3 print-str
+        
+        ( 发送请求 )
+        ;request str-len .Network/length DEO2
+        ;request .Network/write DEO2
+        
+        ;msg4 print-str
+        
+        ( 读取响应 )
+        #0100 .Network/length DEO2
+        ;buffer .Network/read DEO2
+        
+        ;msg5 print-str
+        
+        ( 关闭 )
+        #03 .Network/state DEO
+        
+        POP BRK
+        
+    &closed
+        ;msg6 print-str
+        POP BRK
+        
+    &error
+        ;msg7 print-str
+        POP BRK
+
+@str-len ( str* -> len* )
+    DUP2 #0000
+    &loop
+        OVR2 OVR2 ADD2 LDA ?&continue
+        NIP2 JMP2r
+        &continue
+        INC2 !&loop
+
+@print-str ( str* -> )
+    &loop
+        DUP2 LDA ?&continue
+        POP2 JMP2r
+        &continue
+        DUP2 LDA .Console/write DEO
+        INC2 !&loop
+
+@msg1 "Simple 20 "HTTP 20 "Client 0a $1
+@msg2 "Connecting... 0a $1
+@msg3 "Connected! 0a $1
+@msg4 "Request 20 "sent 0a $1
+@msg5 "Response 20 "received 0a $1
+@msg6 "Closed 0a $1
+@msg7 "Error! 0a $1
+
+@host "httpbin.org $1
+@request "GET 20 "/ip 20 "HTTP/1.1 0d 0a "Host: 20 "httpbin.org 0d 0a 0d 0a $1
+@buffer $100

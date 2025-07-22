@@ -1,0 +1,95 @@
+( Echo Server - 使用端口9999 )
+( 监听端口 9999，回显收到的所有数据 )
+
+|00 @System &vector $2 &wst $1 &rst $1 &eaddr $2 &ecode $2
+|10 @Console &vector $2 &read $1 &pad $5 &write $1 &error $1
+|a0 @Network &vector $2 &state $1 &type $1 &host $2 &port $2 &length $2 &read $2 &write $2
+
+|0100 ( -> )
+    ( 显示启动消息 )
+    ;server-start print-str
+    
+    ( 设置网络事件向量 )
+    ;on-network .Network/vector DEO2
+    
+    ( 设置TCP服务器模式 )
+    #01 .Network/type DEO
+    
+    ( 设置监听端口9999 )
+    #270f .Network/port DEO2
+    
+    ( 开始监听 )
+    #02 .Network/state DEO
+    
+BRK
+
+@on-network ( -> )
+    .Network/state DEI
+    
+    ( 监听状态：有新连接 )
+    DUP #03 EQU ?&accept-client
+    
+    ( 连接状态：客户端已连接 )
+    DUP #02 EQU ?&handle-client
+    
+    ( 关闭状态 )
+    DUP #00 EQU ?&client-closed
+    
+    ( 错误状态 )
+    DUP #04 EQU ?&handle-error
+    
+    POP BRK
+    
+    &accept-client
+        ;client-accept print-str
+        #04 .Network/state DEO  ( 接受连接 )
+        POP BRK
+        
+    &handle-client
+        ;client-ready print-str
+        
+        ( 读取数据 )
+        #0080 .Network/length DEO2  ( 读取最多128字节 )
+        ;data-buffer .Network/read DEO2
+        
+        ( 获取实际读取的长度 )
+        .Network/length DEI2
+        DUP2 #0000 EQU2 ?&no-data
+            
+            ( 有数据，回显给客户端 )
+            .Network/length DEO2
+            ;data-buffer .Network/write DEO2
+            
+            ;echo-sent print-str
+            
+        &no-data
+        POP2 POP BRK
+        
+    &client-closed
+        ;client-disconnect print-str
+        POP BRK
+        
+    &handle-error
+        ;network-error print-str
+        POP BRK
+
+@print-str ( str* -> )
+    &loop
+        DUP2 LDA ?&continue
+        POP2 JMP2r
+        &continue
+        DUP2 LDA .Console/write DEO
+        INC2 !&loop
+
+@server-start 
+    "TCP 20 "Echo 20 "Server 20 "starting... 0a
+    "Listening 20 "on 20 "port 20 "9999 0a 
+    "Test 20 "with: 20 "echo 20 "'hello' 20 "| 20 "nc 20 "localhost 20 "9999 0a $1
+
+@client-accept "Accepting 20 "new 20 "client... 0a $1
+@client-ready "Client 20 "connected! 20 "Echoing 20 "data... 0a $1
+@echo-sent "Data 20 "echoed 20 "back 20 "to 20 "client 0a $1
+@client-disconnect "Client 20 "disconnected 0a $1
+@network-error "Network 20 "error 20 "occurred! 0a $1
+
+@data-buffer $80

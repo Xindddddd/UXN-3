@@ -1,0 +1,78 @@
+( Simple Network Test )
+( 最简单的网络设备测试 )
+
+|00 @System &vector $2 &wst $1 &rst $1 &eaddr $2 &ecode $2
+|10 @Console &vector $2 &read $1 &pad $5 &write $1 &error $1
+|a0 @Network &vector $2 &state $1 &type $1 &host $2 &port $2 &length $2 &read $2 &write $2
+
+|0100 ( -> )
+    ;hello print
+    
+    ( 设置网络回调 )
+    ;on-network .Network/vector DEO2
+    
+    ( 设置服务器模式 )
+    #01 .Network/type DEO
+    
+    ( 设置端口9000 )
+    #2328 .Network/port DEO2
+    
+    ( 开始监听 )
+    #02 .Network/state DEO
+    
+    ;listening print
+    
+BRK
+
+@on-network ( -> )
+    .Network/state DEI
+    
+    DUP #03 EQU ?&accept
+    DUP #02 EQU ?&connected
+    DUP #00 EQU ?&closed
+    DUP #04 EQU ?&error
+    
+    POP BRK
+    
+    &accept
+        ;accept-msg print
+        #04 .Network/state DEO
+        POP BRK
+        
+    &connected
+        ;connected-msg print
+        ;response get-length .Network/length DEO2
+        ;response .Network/write DEO2
+        POP BRK
+        
+    &closed
+        ;closed-msg print
+        POP BRK
+        
+    &error
+        ;error-msg print
+        POP BRK
+
+@get-length ( str* -> length* )
+    #0000 SWP2
+    &loop
+        DUP2 LDA ?&continue
+        POP2 JMP2r
+        &continue
+        SWP2 INC2 SWP2 INC2 !&loop
+
+@print ( str* -> )
+    &loop
+        DUP2 LDA ?&continue
+        POP2 JMP2r
+        &continue
+        DUP2 LDA .Console/write DEO
+        INC2 !&loop
+
+@hello "Network 20 "device 20 "test 0a $1
+@listening "Listening 20 "on 20 "port 20 "9000... 0a $1
+@accept-msg "Accepting 20 "connection... 0a $1
+@connected-msg "Client 20 "connected! 0a $1
+@closed-msg "Connection 20 "closed 0a $1
+@error-msg "Network 20 "error 0a $1
+@response "Hello 20 "from 20 "Uxn 20 "server! 0a $1
