@@ -1,5 +1,4 @@
 ( Simple Network Test )
-( 最简单的网络设备测试 )
 
 |00 @System &vector $2 &wst $1 &rst $1 &eaddr $2 &ecode $2
 |10 @Console &vector $2 &read $1 &pad $5 &write $1 &error $1
@@ -8,16 +7,12 @@
 |0100 ( -> )
     ;hello print
     
-    ( 设置网络回调 )
     ;on-network .Network/vector DEO2
     
-    ( 设置服务器模式 )
     #01 .Network/type DEO
     
-    ( 设置端口9000 )
     #2328 .Network/port DEO2
     
-    ( 开始监听 )
     #02 .Network/state DEO
     
     ;listening print

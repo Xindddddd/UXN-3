@@ -1,24 +1,18 @@
-( Echo Server - 使用端口9999 )
-( 监听端口 9999，回显收到的所有数据 )
+( Echo Server - 9999 )
 
 |00 @System &vector $2 &wst $1 &rst $1 &eaddr $2 &ecode $2
 |10 @Console &vector $2 &read $1 &pad $5 &write $1 &error $1
 |a0 @Network &vector $2 &state $1 &type $1 &host $2 &port $2 &length $2 &read $2 &write $2
 
 |0100 ( -> )
-    ( 显示启动消息 )
     ;server-start print-str
     
-    ( 设置网络事件向量 )
     ;on-network .Network/vector DEO2
     
-    ( 设置TCP服务器模式 )
     #01 .Network/type DEO
     
-    ( 设置监听端口9999 )
     #270f .Network/port DEO2
     
-    ( 开始监听 )
     #02 .Network/state DEO
     
 BRK
@@ -26,37 +20,30 @@ BRK
 @on-network ( -> )
     .Network/state DEI
     
-    ( 监听状态：有新连接 )
     DUP #03 EQU ?&accept-client
     
-    ( 连接状态：客户端已连接 )
     DUP #02 EQU ?&handle-client
     
-    ( 关闭状态 )
     DUP #00 EQU ?&client-closed
     
-    ( 错误状态 )
     DUP #04 EQU ?&handle-error
     
     POP BRK
     
     &accept-client
         ;client-accept print-str
-        #04 .Network/state DEO  ( 接受连接 )
+        #04 .Network/state DEO  
         POP BRK
         
     &handle-client
         ;client-ready print-str
         
-        ( 读取数据 )
-        #0080 .Network/length DEO2  ( 读取最多128字节 )
+        #0080 .Network/length DEO2  
         ;data-buffer .Network/read DEO2
         
-        ( 获取实际读取的长度 )
         .Network/length DEI2
         DUP2 #0000 EQU2 ?&no-data
             
-            ( 有数据，回显给客户端 )
             .Network/length DEO2
             ;data-buffer .Network/write DEO2
             

@@ -1,5 +1,4 @@
 ( Simple HTTP Client )
-( 最简单的HTTP客户端测试 )
 
 |00 @System &vector $2 &wst $1 &rst $1 &eaddr $2 &ecode $2
 |10 @Console &vector $2 &read $1 &pad $5 &write $1 &error $1
@@ -8,17 +7,13 @@
 |0100 ( -> )
     ;msg1 print-str
     
-    ( 设置网络回调 )
     ;on-network .Network/vector DEO2
     
-    ( 设置客户端模式 )
     #00 .Network/type DEO
     
-    ( 设置主机和端口 )
     ;host .Network/host DEO2
     #0050 .Network/port DEO2
     
-    ( 连接 )
     #01 .Network/state DEO
     
 BRK
@@ -40,19 +35,16 @@ BRK
     &connected
         ;msg3 print-str
         
-        ( 发送请求 )
         ;request str-len .Network/length DEO2
         ;request .Network/write DEO2
         
         ;msg4 print-str
         
-        ( 读取响应 )
         #0100 .Network/length DEO2
         ;buffer .Network/read DEO2
         
         ;msg5 print-str
         
-        ( 关闭 )
         #03 .Network/state DEO
         
         POP BRK

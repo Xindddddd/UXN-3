@@ -24,7 +24,7 @@ static struct {
     char host[256];
     int port;
     struct sockaddr_in addr;
-    int vector_pending;  /* 是否需要触发向量 */
+    int vector_pending;  
 } net = {0};
 
 /* Device states */
